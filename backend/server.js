@@ -50,6 +50,10 @@ app.get("/", (req, res) => {
   res.send("Pet Hospital API is running");
 });
 
+app.get("/health", (req, res) => {
+  res.json({ status: "OK" });
+});
+
 app.get("/api/test-db", (req, res) => {
   db.query("SELECT 1 + 1 AS result", (err, result) => {
     if (err) {
