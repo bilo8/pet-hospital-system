@@ -28,6 +28,8 @@ function BillsPage() {
     cvv: "",
   });
 
+  const [isPaying, setIsPaying] = useState(false);
+
   const api = axios.create({
     baseURL: `${import.meta.env.VITE_API_URL}/api`,
     headers: {
@@ -87,9 +89,48 @@ function BillsPage() {
   };
 
   const handlePaymentChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "cardNumber") {
+      const onlyNumbers = value.replace(/\D/g, "").slice(0, 16);
+      const formatted = onlyNumbers.replace(/(.{4})/g, "$1 ").trim();
+
+      setPaymentForm({
+        ...paymentForm,
+        cardNumber: formatted,
+      });
+
+      return;
+    }
+
+    if (name === "expiry") {
+      const onlyNumbers = value.replace(/\D/g, "").slice(0, 4);
+      let formatted = onlyNumbers;
+
+      if (onlyNumbers.length >= 3) {
+        formatted = `${onlyNumbers.slice(0, 2)}/${onlyNumbers.slice(2)}`;
+      }
+
+      setPaymentForm({
+        ...paymentForm,
+        expiry: formatted,
+      });
+
+      return;
+    }
+
+    if (name === "cvv") {
+      setPaymentForm({
+        ...paymentForm,
+        cvv: value.replace(/\D/g, "").slice(0, 3),
+      });
+
+      return;
+    }
+
     setPaymentForm({
       ...paymentForm,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
 
@@ -114,18 +155,52 @@ function BillsPage() {
   const confirmPayment = async (e) => {
     e.preventDefault();
 
-    await api.post(`/bills/${selectedBill.id}/pay-online`);
+    const cleanCardNumber = paymentForm.cardNumber.replace(/\s/g, "");
 
-    setSelectedBill(null);
+    if (cleanCardNumber.length !== 16) {
+      alert("Card number must contain 16 digits");
+      return;
+    }
 
-    setPaymentForm({
-      cardholder: "",
-      cardNumber: "",
-      expiry: "",
-      cvv: "",
-    });
+    if (!/^\d{2}\/\d{2}$/.test(paymentForm.expiry)) {
+      alert("Expiry must be in MM/YY format");
+      return;
+    }
 
-    loadBills();
+    const month = Number(paymentForm.expiry.slice(0, 2));
+
+    if (month < 1 || month > 12) {
+      alert("Invalid expiry month");
+      return;
+    }
+
+    if (paymentForm.cvv.length !== 3) {
+      alert("CVV must contain 3 digits");
+      return;
+    }
+
+    try {
+      setIsPaying(true);
+
+      await api.post(`/bills/${selectedBill.id}/pay-online`);
+
+      setSelectedBill(null);
+
+      setPaymentForm({
+        cardholder: "",
+        cardNumber: "",
+        expiry: "",
+        cvv: "",
+      });
+
+      loadBills();
+
+      alert("Payment completed successfully");
+    } catch (err) {
+      alert(err.response?.data?.message || "Payment failed");
+    } finally {
+      setIsPaying(false);
+    }
   };
 
   const downloadInvoice = async (billId) => {
@@ -344,77 +419,121 @@ function BillsPage() {
       </div>
 
       {selectedBill && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center px-4 z-50">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-lg p-6">
-            <h3 className="text-2xl font-bold text-blue-700 mb-2">
-              Online Payment
-            </h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4 z-50">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white p-6">
+              <h3 className="text-2xl font-bold">Secure Online Payment</h3>
+              <p className="text-blue-100 mt-1">
+                Complete your payment safely for your pet hospital bill.
+              </p>
+            </div>
 
-            <p className="text-gray-600 mb-4">
-              Bill Amount:
-              <span className="font-bold text-green-700 ml-2">
-                ${selectedBill.amount}
-              </span>
-            </p>
+            <div className="p-6">
+              <div className="bg-blue-50 dark:bg-gray-800 rounded-2xl p-4 mb-5 border dark:border-gray-700">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-300">Bill Amount</span>
+                  <span className="text-2xl font-bold text-green-700 dark:text-green-400">
+                    ${selectedBill.amount}
+                  </span>
+                </div>
 
-            <form onSubmit={confirmPayment} className="space-y-4">
-              <input
-                name="cardholder"
-                value={paymentForm.cardholder}
-                onChange={handlePaymentChange}
-                placeholder="Cardholder Name"
-                className="w-full border rounded-lg px-3 py-2"
-                required
-              />
-
-              <input
-                name="cardNumber"
-                value={paymentForm.cardNumber}
-                onChange={handlePaymentChange}
-                placeholder="Card Number"
-                maxLength="16"
-                className="w-full border rounded-lg px-3 py-2"
-                required
-              />
-
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  name="expiry"
-                  value={paymentForm.expiry}
-                  onChange={handlePaymentChange}
-                  placeholder="MM/YY"
-                  className="w-full border rounded-lg px-3 py-2"
-                  required
-                />
-
-                <input
-                  name="cvv"
-                  value={paymentForm.cvv}
-                  onChange={handlePaymentChange}
-                  placeholder="CVV"
-                  maxLength="3"
-                  className="w-full border rounded-lg px-3 py-2"
-                  required
-                />
+                <div className="mt-3 text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                  <p>
+                    <span className="font-semibold">Pet:</span> {selectedBill.pet_name}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Doctor:</span>{" "}
+                    {selectedBill.doctor_name}
+                  </p>
+                </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSelectedBill(null)}
-                  className="w-full sm:w-1/2 border border-gray-400 py-2 rounded-lg"
-                >
-                  Cancel
-                </button>
+              <form onSubmit={confirmPayment} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-1">
+                    Cardholder Name
+                  </label>
+                  <input
+                    name="cardholder"
+                    value={paymentForm.cardholder}
+                    onChange={handlePaymentChange}
+                    placeholder=""
+                    className="w-full border rounded-xl px-4 py-3"
+                    required
+                  />
+                </div>
 
-                <button
-                  type="submit"
-                  className="w-full sm:w-1/2 bg-green-600 text-white py-2 rounded-lg font-semibold"
-                >
-                  Confirm Payment
-                </button>
-              </div>
-            </form>
+                <div>
+                  <label className="block text-sm font-semibold mb-1">
+                    Card Number
+                  </label>
+                  <input
+                    name="cardNumber"
+                    value={paymentForm.cardNumber}
+                    onChange={handlePaymentChange}
+                    placeholder="1234 5678 9012 3456"
+                    maxLength="19"
+                    className="w-full border rounded-xl px-4 py-3 tracking-widest"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">
+                      Expiry
+                    </label>
+                    <input
+                      name="expiry"
+                      value={paymentForm.expiry}
+                      onChange={handlePaymentChange}
+                      placeholder="MM/YY"
+                      maxLength="5"
+                      className="w-full border rounded-xl px-4 py-3"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">
+                      CVV
+                    </label>
+                    <input
+                      name="cvv"
+                      value={paymentForm.cvv}
+                      onChange={handlePaymentChange}
+                      placeholder="123"
+                      maxLength="3"
+                      className="w-full border rounded-xl px-4 py-3"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 rounded-xl p-3 text-sm">
+                  This is a simulated payment for university project demonstration.
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedBill(null)}
+                    disabled={isPaying}
+                    className="w-full sm:w-1/2 border border-gray-400 py-3 rounded-xl font-semibold"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isPaying}
+                    className="w-full sm:w-1/2 bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 disabled:bg-gray-400"
+                  >
+                    {isPaying ? "Processing..." : "Pay Now"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -430,9 +549,8 @@ function StatusBadge({ status }) {
 
   return (
     <span
-      className={`px-3 py-1 rounded-full text-sm font-semibold ${
-        styles[status] || "bg-gray-100 text-gray-700"
-      }`}
+      className={`px-3 py-1 rounded-full text-sm font-semibold ${styles[status] || "bg-gray-100 text-gray-700"
+        }`}
     >
       {status}
     </span>
