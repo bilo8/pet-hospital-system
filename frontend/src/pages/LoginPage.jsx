@@ -25,7 +25,7 @@ function LoginPage() {
 
     try {
       const res = await axios.post(
-        "http://192.168.1.105:5000/api/auth/login",
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
         form,
       );
 

@@ -15,7 +15,7 @@ function ReceptionistDashboard() {
 
   useEffect(() => {
     axios
-      .get("http://192.168.1.105:5000/api/stats/receptionist", {
+      .get(`${import.meta.env.VITE_API_URL}/api/stats/receptionist`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

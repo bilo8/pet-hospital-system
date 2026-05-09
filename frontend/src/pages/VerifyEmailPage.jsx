@@ -11,7 +11,7 @@ function VerifyEmailPage() {
   useEffect(() => {
     axios
       .get(
-        `http://192.168.1.105:5000/api/temporary-registrations/verify/${token}`
+        `${import.meta.env.VITE_API_URL}/api/temporary-registrations/verify/${token}`
       )
       .then((res) => {
         setMessage(res.data.message);

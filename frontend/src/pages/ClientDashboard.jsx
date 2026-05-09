@@ -19,7 +19,7 @@ function ClientDashboard() {
 
   useEffect(() => {
     axios
-      .get("http://192.168.1.105:5000/api/client-dashboard", {
+      .get(`${import.meta.env.VITE_API_URL}/api/client-dashboard`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -86,7 +86,7 @@ function ClientDashboard() {
               <div key={pet.id} className="border rounded-2xl p-4 bg-gray-50">
                 {pet.image_url ? (
                   <img
-                    src={`http://192.168.1.105:5000${pet.image_url}`}
+                    src={`${import.meta.env.VITE_API_URL}${pet.image_url}`}
                     alt={pet.name}
                     className="w-full h-40 object-cover rounded-xl mb-3"
                   />

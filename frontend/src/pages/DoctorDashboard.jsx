@@ -19,7 +19,7 @@ function DoctorDashboard() {
 
   useEffect(() => {
     axios
-      .get("http://192.168.1.105:5000/api/doctor-dashboard", {
+      .get(`${import.meta.env.VITE_API_URL}/api/doctor-dashboard`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

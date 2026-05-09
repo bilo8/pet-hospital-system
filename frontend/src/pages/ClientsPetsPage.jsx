@@ -41,7 +41,7 @@ function ClientsPetsPage() {
   const token = localStorage.getItem("token");
 
   const api = axios.create({
-    baseURL: "http://192.168.1.105:5000/api",
+    baseURL: `${import.meta.env.VITE_API_URL}/api`,
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -390,7 +390,7 @@ function ClientsPetsPage() {
                       <td className="p-3">
                         {item.image_url ? (
                           <img
-                            src={`http://192.168.1.105:5000${item.image_url}`}
+                            src={`${import.meta.env.VITE_API_URL}${item.image_url}`}
                             alt={item.pet_name}
                             className="w-16 h-16 object-cover rounded-lg"
                           />
@@ -554,7 +554,7 @@ function ClientPetCard({ item, onEdit }) {
       <div className="flex gap-4">
         {item.image_url ? (
           <img
-            src={`http://192.168.1.105:5000${item.image_url}`}
+            src={`${import.meta.env.VITE_API_URL}${item.image_url}`}
             alt={item.pet_name}
             className="w-20 h-20 object-cover rounded-xl"
           />

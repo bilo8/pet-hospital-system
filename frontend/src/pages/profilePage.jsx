@@ -24,7 +24,7 @@ function ProfilePage() {
   });
 
   const api = axios.create({
-    baseURL: "http://192.168.1.105:5000/api",
+    baseURL: `${import.meta.env.VITE_API_URL}/api`,
     headers: {
       Authorization: `Bearer ${token}`,
     },

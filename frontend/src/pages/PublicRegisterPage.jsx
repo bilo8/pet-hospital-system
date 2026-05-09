@@ -54,7 +54,7 @@ function PublicRegisterPage() {
       }
 
       const res = await axios.post(
-        "http://192.168.1.105:5000/api/temporary-registrations",
+        `${import.meta.env.VITE_API_URL}/api/temporary-registrations`,
         formData,
         {
           headers: {

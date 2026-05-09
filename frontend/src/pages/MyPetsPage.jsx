@@ -20,7 +20,7 @@ function MyPetsPage() {
 
   const loadPets = () => {
     axios
-      .get("http://192.168.1.105:5000/api/dropdowns/pets", {
+      .get(`${import.meta.env.VITE_API_URL}/api/dropdowns/pets`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -59,7 +59,7 @@ function MyPetsPage() {
     });
 
     await axios.post(
-      "http://192.168.1.105:5000/api/client-pets/my-pets",
+      `${import.meta.env.VITE_API_URL}/api/client-pets/my-pets`,
       formData,
       {
         headers: {
@@ -198,7 +198,7 @@ function MyPetsPage() {
             <div key={pet.id} className="bg-white rounded-2xl shadow p-5">
               {pet.image_url ? (
                 <img
-                  src={`http://192.168.1.105:5000${pet.image_url}`}
+                  src={`${import.meta.env.VITE_API_URL}${pet.image_url}`}
                   alt={pet.name}
                   className="w-full h-48 object-cover rounded-xl mb-4"
                 />
