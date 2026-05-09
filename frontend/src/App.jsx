@@ -12,7 +12,7 @@ import AppointmentsPage from "./pages/AppointmentsPage";
 import MedicalRecordsPage from "./pages/MedicalRecordsPage";
 import VideoConsultationsPage from "./pages/VideoConsultationsPage";
 import BillsPage from "./pages/BillsPage";
-import ProfilePage from "./pages/temp";
+import ProfilePage from "./pages/ProfilePage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MyPetsPage from "./pages/MyPetsPage";
 import PublicRegisterPage from "./pages/PublicRegisterPage";
