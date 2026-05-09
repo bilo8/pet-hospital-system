@@ -204,7 +204,7 @@ router.delete(
 );
 
 // Download invoice PDF
-router.get("/:id/invoice", verifyToken, async (req, res) => {
+router.get("/:id/invoice", verifyToken, (req, res) => {
   const { id } = req.params;
 
   let sql = `
@@ -256,7 +256,10 @@ router.get("/:id/invoice", verifyToken, async (req, res) => {
 
     const bill = results[0];
 
-    const doc = new PDFDocument({ margin: 50 });
+    const doc = new PDFDocument({
+      margin: 40,
+      size: "A4",
+    });
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
@@ -266,52 +269,189 @@ router.get("/:id/invoice", verifyToken, async (req, res) => {
 
     doc.pipe(res);
 
-    doc.fontSize(24).fillColor("#1d4ed8").text("PetCare Hospital", {
-      align: "center",
-    });
-
-    doc.moveDown();
-    doc.fontSize(18).fillColor("#000").text(`Invoice #${bill.id}`, {
-      align: "center",
-    });
-
-    doc.moveDown(2);
-
-    doc.fontSize(12).text(`Client: ${bill.client_name}`);
-    doc.text(`Email: ${bill.client_email}`);
-    doc.text(`Phone: ${bill.client_phone || "-"}`);
-
-    doc.moveDown();
-
-    doc.text(`Pet: ${bill.pet_name}`);
-    doc.text(`Pet Type: ${bill.pet_type}`);
-    doc.text(`Doctor: ${bill.doctor_name}`);
-    doc.text(
-      `Appointment Date: ${new Date(
-        bill.appointment_date
-      ).toLocaleString()}`
-    );
-
-    doc.moveDown();
-
-    doc.fontSize(14).text("Payment Details", { underline: true });
-    doc.moveDown(0.5);
-
-    doc.fontSize(12).text(`Amount: $${bill.amount}`);
-    doc.text(`Status: ${bill.status}`);
-    doc.text(`Payment Method: ${bill.payment_method || "-"}`);
-    doc.text(`Transaction ID: ${bill.transaction_id || "-"}`);
-    doc.text(
-      `Payment Date: ${bill.payment_date ? new Date(bill.payment_date).toLocaleString() : "-"
-      }`
-    );
-
-    doc.moveDown(2);
+    // Header
+    doc.rect(0, 0, 700, 95).fill("#1d4ed8");
 
     doc
+      .fillColor("white")
+      .font("Helvetica-Bold")
+      .fontSize(28)
+      .text("PetCare Hospital", 40, 28);
+
+    doc
+      .font("Helvetica")
+      .fontSize(12)
+      .text("Professional pet care and medical services", 40, 63);
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(20)
+      .text("INVOICE", 430, 32, { align: "right" });
+
+    doc
+      .font("Helvetica")
       .fontSize(10)
-      .fillColor("#555")
-      .text("Thank you for trusting PetCare Hospital.", {
+      .text(`Invoice #${bill.id}`, 430, 60, { align: "right" });
+
+    // Status badge
+    const statusColor = bill.status === "Paid" ? "#16a34a" : "#dc2626";
+    doc.roundedRect(430, 120, 130, 35, 8).fill(statusColor);
+
+    doc
+      .fillColor("white")
+      .font("Helvetica-Bold")
+      .fontSize(14)
+      .text(bill.status.toUpperCase(), 430, 130, {
+        width: 130,
+        align: "center",
+      });
+
+    // Client card
+    doc
+      .roundedRect(40, 120, 360, 105, 10)
+      .fillAndStroke("#f3f4f6", "#d1d5db");
+
+    doc
+      .fillColor("#111827")
+      .font("Helvetica-Bold")
+      .fontSize(16)
+      .text("Bill To", 55, 138);
+
+    doc
+      .font("Helvetica")
+      .fontSize(11)
+      .text(`Client: ${bill.client_name}`, 55, 165)
+      .text(`Email: ${bill.client_email}`, 55, 185)
+      .text(`Phone: ${bill.client_phone || "-"}`, 55, 205);
+
+    // Invoice info card
+    doc
+      .roundedRect(430, 170, 130, 55, 10)
+      .fillAndStroke("#eff6ff", "#93c5fd");
+
+    doc
+      .fillColor("#111827")
+      .font("Helvetica-Bold")
+      .fontSize(10)
+      .text("Created At", 445, 185);
+
+    doc
+      .font("Helvetica")
+      .fontSize(10)
+      .text(new Date(bill.created_at).toLocaleDateString(), 445, 205);
+
+    // Appointment section
+    doc
+      .roundedRect(40, 250, 520, 115, 10)
+      .fillAndStroke("#ffffff", "#d1d5db");
+
+    doc
+      .fillColor("#1d4ed8")
+      .font("Helvetica-Bold")
+      .fontSize(16)
+      .text("Appointment Details", 55, 270);
+
+    doc.fillColor("#111827").font("Helvetica").fontSize(11);
+
+    doc.text(`Pet Name: ${bill.pet_name}`, 55, 300);
+    doc.text(`Pet Type: ${bill.pet_type}`, 300, 300);
+
+    doc.text(`Doctor: ${bill.doctor_name}`, 55, 322);
+    doc.text(
+      `Appointment: ${new Date(bill.appointment_date).toLocaleString()}`,
+      55,
+      344
+    );
+
+    // Payment table header
+    let y = 405;
+
+    doc
+      .fillColor("#111827")
+      .font("Helvetica-Bold")
+      .fontSize(18)
+      .text("Payment Summary", 40, y);
+
+    y += 35;
+
+    doc.rect(40, y, 520, 32).fill("#1d4ed8");
+
+    doc
+      .fillColor("white")
+      .font("Helvetica-Bold")
+      .fontSize(11)
+      .text("Description", 55, y + 10)
+      .text("Amount", 460, y + 10);
+
+    y += 32;
+
+    doc.rect(40, y, 520, 45).fillAndStroke("#f9fafb", "#d1d5db");
+
+    doc
+      .fillColor("#111827")
+      .font("Helvetica")
+      .fontSize(11)
+      .text("Pet hospital medical service", 55, y + 16);
+
+    doc
+      .font("Helvetica-Bold")
+      .text(`$${Number(bill.amount).toFixed(2)}`, 460, y + 16);
+
+    y += 65;
+
+    // Total
+    doc
+      .roundedRect(360, y, 200, 50, 8)
+      .fillAndStroke("#eff6ff", "#93c5fd");
+
+    doc
+      .fillColor("#1d4ed8")
+      .font("Helvetica-Bold")
+      .fontSize(13)
+      .text("TOTAL", 380, y + 10);
+
+    doc
+      .fillColor("#111827")
+      .fontSize(18)
+      .text(`$${Number(bill.amount).toFixed(2)}`, 470, y + 8);
+
+    y += 85;
+
+    // Payment details
+    doc
+      .roundedRect(40, y, 520, 100, 10)
+      .fillAndStroke("#f3f4f6", "#d1d5db");
+
+    doc
+      .fillColor("#111827")
+      .font("Helvetica-Bold")
+      .fontSize(15)
+      .text("Payment Details", 55, y + 18);
+
+    doc.font("Helvetica").fontSize(11);
+
+    doc.text(`Payment Method: ${bill.payment_method || "-"}`, 55, y + 48);
+    doc.text(`Transaction ID: ${bill.transaction_id || "-"}`, 300, y + 48);
+
+    doc.text(
+      `Payment Date: ${bill.payment_date ? new Date(bill.payment_date).toLocaleString() : "-"
+      }`,
+      55,
+      y + 70
+    );
+
+    // Footer
+    doc
+      .fillColor("#6b7280")
+      .font("Helvetica")
+      .fontSize(10)
+      .text("Thank you for trusting PetCare Hospital.", 40, 760, {
+        align: "center",
+      });
+
+    doc
+      .fontSize(9)
+      .text("Generated by PetCare Hospital System", 40, 778, {
         align: "center",
       });
 

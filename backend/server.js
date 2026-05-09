@@ -23,10 +23,16 @@ const temporaryRegistrationRoutes = require("./routes/temporaryRegistrationRoute
 const profileRoutes = require("./routes/profileRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const uploadsPath = path.join(__dirname, "uploads");
+const doctorAvailabilityRoutes = require("./routes/doctorAvailabilityRoutes");
+const startAppointmentReminderJob = require("./jobs/appointmentReminderJob");
+
+startAppointmentReminderJob();
+
 
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath);
 }
+
 
 
 app.use(
@@ -52,6 +58,7 @@ app.use("/api/temporary-registrations", temporaryRegistrationRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/uploads", express.static(uploadsPath));
+app.use("/api/doctor-availability", doctorAvailabilityRoutes);
 
 app.get("/", (req, res) => {
   res.send("Pet Hospital API is running");

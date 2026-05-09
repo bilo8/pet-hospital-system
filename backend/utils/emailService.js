@@ -48,7 +48,33 @@ const sendVerificationEmail = async ({ to, fullName, verificationLink }) => {
   });
 };
 
+const sendAppointmentReminderEmail = async ({
+  to,
+  fullName,
+  appointmentDate,
+  petName,
+  doctorName,
+}) => {
+  await transporter.sendMail({
+    from: `"PetCare Hospital" <${process.env.EMAIL_USER}>`,
+    to,
+    subject: "Reminder: Your PetCare appointment is tomorrow",
+    html: `
+      <h2>Appointment Reminder</h2>
+      <p>Hello <b>${fullName}</b>,</p>
+      <p>This is a reminder that your appointment is tomorrow.</p>
+      <p><b>Pet:</b> ${petName}</p>
+      <p><b>Doctor:</b> ${doctorName}</p>
+      <p><b>Date:</b> ${new Date(appointmentDate).toLocaleString()}</p>
+      <p>Please arrive 10 minutes before your appointment.</p>
+      <br/>
+      <p>PetCare Hospital</p>
+    `,
+  });
+};
+
 module.exports = {
   sendClientConfirmationEmail,
   sendVerificationEmail,
+  sendAppointmentReminderEmail,
 };

@@ -63,45 +63,100 @@ router.post(
     const { pet_id, doctor_id, appointment_date, reason } = req.body;
 
     const insertAppointment = () => {
-      const checkSql = `
-    SELECT id 
-    FROM appointments
+      const appointmentDate = new Date(appointment_date);
+
+      const dayNames = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+
+      const dayOfWeek = dayNames[appointmentDate.getDay()];
+
+      const appointmentTime = appointmentDate.toTimeString().slice(0, 5);
+
+      // Check doctor availability schedule
+      const availabilitySql = `
+    SELECT *
+    FROM doctor_availability
     WHERE doctor_id = ?
-    AND appointment_date = ?
-    AND status != 'Cancelled'
+    AND day_of_week = ?
+    AND start_time <= ?
+    AND end_time > ?
   `;
 
-      db.query(checkSql, [doctor_id, appointment_date], (checkErr, existing) => {
-        if (checkErr) {
-          return res.status(500).json({ message: "Database error" });
-        }
-
-        if (existing.length > 0) {
-          return res.status(400).json({
-            message: "This appointment slot is already booked",
-          });
-        }
-
-        db.query(
-          `INSERT INTO appointments 
-      (pet_id, doctor_id, appointment_date, reason, status)
-      VALUES (?, ?, ?, ?, 'Pending')`,
-          [pet_id, doctor_id, appointment_date, reason],
-          (err, result) => {
-            if (err) {
-              return res.status(500).json({
-                message: "Appointment creation failed",
-                error: err.message,
-              });
-            }
-
-            res.status(201).json({
-              message: "Appointment created successfully",
-              appointmentId: result.insertId,
+      db.query(
+        availabilitySql,
+        [doctor_id, dayOfWeek, appointmentTime, appointmentTime],
+        (availabilityErr, availabilityRows) => {
+          if (availabilityErr) {
+            return res.status(500).json({
+              message: "Availability validation failed",
+              error: availabilityErr.message,
             });
           }
-        );
-      });
+
+          if (availabilityRows.length === 0) {
+            return res.status(400).json({
+              message: "Doctor is not available at this time",
+            });
+          }
+
+          // Check overlapping appointments
+          const checkSql = `
+        SELECT id
+        FROM appointments
+        WHERE doctor_id = ?
+        AND appointment_date = ?
+        AND status != 'Cancelled'
+      `;
+
+          db.query(
+            checkSql,
+            [doctor_id, appointment_date],
+            (checkErr, existing) => {
+              if (checkErr) {
+                return res.status(500).json({
+                  message: "Database error",
+                });
+              }
+
+              if (existing.length > 0) {
+                return res.status(400).json({
+                  message: "This appointment slot is already booked",
+                });
+              }
+
+              // Create appointment
+              db.query(
+                `
+              INSERT INTO appointments
+              (pet_id, doctor_id, appointment_date, reason, status)
+              VALUES (?, ?, ?, ?, 'Pending')
+            `,
+                [pet_id, doctor_id, appointment_date, reason],
+                (err, result) => {
+                  if (err) {
+                    return res.status(500).json({
+                      message: "Appointment creation failed",
+                      error: err.message,
+                    });
+                  }
+
+                  res.status(201).json({
+                    message: "Appointment created successfully",
+                    appointmentId: result.insertId,
+                  });
+                }
+              );
+            }
+          );
+        }
+      );
     };
     if (req.user.role === "CLIENT") {
       const checkSql = `

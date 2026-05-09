@@ -19,6 +19,8 @@ import PublicRegisterPage from "./pages/PublicRegisterPage";
 import TemporaryRegistrationsPage from "./pages/TemporaryRegistrationsPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import CalendarAppointmentsPage from "./pages/CalendarAppointmentsPage";
+import DoctorAvailabilityPage from "./pages/admin/DoctorAvailabilityPage";
+import { ToastContainer } from "react-toastify";
 
 function App() {
   return (
@@ -283,7 +285,29 @@ function App() {
             </ProtectedRoute>
           }
         /><Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+        <Route
+          path="/admin/doctor-availability"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <DoctorAvailabilityPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
+
+      <>
+        {/* your routes here */}
+
+        <ToastContainer
+          position="top-right"
+          autoClose={2500}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+          theme="colored"
+        />
+      </>
 
     </BrowserRouter>
   );

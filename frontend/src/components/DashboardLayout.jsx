@@ -15,7 +15,7 @@ function DashboardLayout({ title, children }) {
   );
 
   const api = axios.create({
-    baseURL: `${import.meta.env.VITE_API_URL}`,
+    baseURL: `${import.meta.env.VITE_API_URL}/api`,
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -79,6 +79,7 @@ function DashboardLayout({ title, children }) {
       { name: "Clients & Pets", path: "/admin/clients-pets" },
       { name: "Appointments", path: "/admin/appointments" },
       { name: "Appointments Calendar", path: "/admin/appointments-calendar" },
+      { name: "Doctor Availability", path: "/admin/doctor-availability" },
       { name: "Medical Records", path: "/admin/medical-records" },
       { name: "Video Consultations", path: "/admin/video-consultations" },
       { name: "Bills", path: "/admin/bills" },

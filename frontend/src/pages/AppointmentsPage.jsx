@@ -53,11 +53,16 @@ function AppointmentsPage({ mode = "both" }) {
       return;
     }
 
-    const res = await api.get(
-      `/appointments/available-slots?doctor_id=${doctorId}&date=${date}`
-    );
+    try {
+      const res = await api.get(
+        `/doctor-availability/slots?doctor_id=${doctorId}&date=${date}`
+      );
 
-    setAvailableSlots(res.data);
+      setAvailableSlots(res.data);
+    } catch (err) {
+      console.error(err);
+      setAvailableSlots([]);
+    }
   };
 
   useEffect(() => {
@@ -316,8 +321,8 @@ function AppointmentsPage({ mode = "both" }) {
 
                     {(user.role === "ADMIN" ||
                       user.role === "RECEPTIONIST") && (
-                      <th className="p-3 text-left">Action</th>
-                    )}
+                        <th className="p-3 text-left">Action</th>
+                      )}
                   </tr>
                 </thead>
 
@@ -337,21 +342,21 @@ function AppointmentsPage({ mode = "both" }) {
 
                       {(user.role === "ADMIN" ||
                         user.role === "RECEPTIONIST") && (
-                        <td className="p-3">
-                          <select
-                            value={item.status}
-                            onChange={(e) =>
-                              updateStatus(item.id, e.target.value)
-                            }
-                            className="border rounded-lg px-2 py-1"
-                          >
-                            <option value="Pending">Pending</option>
-                            <option value="Confirmed">Confirmed</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Cancelled">Cancelled</option>
-                          </select>
-                        </td>
-                      )}
+                          <td className="p-3">
+                            <select
+                              value={item.status}
+                              onChange={(e) =>
+                                updateStatus(item.id, e.target.value)
+                              }
+                              className="border rounded-lg px-2 py-1"
+                            >
+                              <option value="Pending">Pending</option>
+                              <option value="Confirmed">Confirmed</option>
+                              <option value="Completed">Completed</option>
+                              <option value="Cancelled">Cancelled</option>
+                            </select>
+                          </td>
+                        )}
                     </tr>
                   ))}
 
@@ -382,9 +387,8 @@ function StatusBadge({ status }) {
 
   return (
     <span
-      className={`px-3 py-1 rounded-full text-sm font-semibold ${
-        styles[status] || "bg-gray-100 text-gray-700"
-      }`}
+      className={`px-3 py-1 rounded-full text-sm font-semibold ${styles[status] || "bg-gray-100 text-gray-700"
+        }`}
     >
       {status}
     </span>

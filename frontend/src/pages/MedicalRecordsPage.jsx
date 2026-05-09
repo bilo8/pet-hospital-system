@@ -31,7 +31,7 @@ function MedicalRecordsPage() {
   });
 
   const api = axios.create({
-    baseURL: `${import.meta.env.VITE_API_URL}`,
+    baseURL: `${import.meta.env.VITE_API_URL}/api`,
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -70,9 +70,13 @@ function MedicalRecordsPage() {
         record.visit_summary?.toLowerCase().includes(search) ||
         record.notes?.toLowerCase().includes(search);
 
+      const selectedPet = pets.find(
+        (p) => String(p.id) === String(filters.pet_id)
+      );
+
       const matchesPet = filters.pet_id
         ? String(record.pet_id) === String(filters.pet_id) ||
-          record.pet_name === pets.find((p) => String(p.id) === String(filters.pet_id))?.name
+        record.pet_name === selectedPet?.name
         : true;
 
       const recordDate = record.record_date
@@ -116,6 +120,44 @@ function MedicalRecordsPage() {
     });
 
     loadRecords();
+  };
+
+  const downloadPrescription = async (recordId) => {
+    const res = await api.get(`/medical-records/${recordId}/prescription`, {
+      responseType: "blob",
+    });
+
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.setAttribute("download", `prescription-${recordId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+  };
+  const downloadPetHistory = async () => {
+    if (!filters.pet_id) {
+      alert("Please select a pet first");
+      return;
+    }
+
+    const res = await api.get(`/medical-records/pet/${filters.pet_id}/history-pdf`, {
+      responseType: "blob",
+    });
+
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.setAttribute("download", `pet-medical-history-${filters.pet_id}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
   };
 
   return (
@@ -288,18 +330,35 @@ function MedicalRecordsPage() {
                 className="border rounded-lg px-3 py-2 w-full"
               />
 
-              <button
-                onClick={clearFilters}
-                className="border border-gray-400 rounded-lg px-3 py-2 hover:bg-gray-50"
-              >
-                Clear
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={clearFilters}
+                  className="w-full border border-gray-400 rounded-lg px-3 py-2 hover:bg-gray-50"
+                >
+                  Clear
+                </button>
+
+                <button
+                  onClick={downloadPetHistory}
+                  disabled={!filters.pet_id}
+                  className={`w-full rounded-lg px-3 py-2 text-white ${filters.pet_id
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-gray-400 cursor-not-allowed"
+                    }`}
+                >
+                  Full History PDF
+                </button>
+              </div>
             </div>
           </div>
 
           <div className="space-y-4">
             {filteredRecords.map((record) => (
-              <MedicalRecordTimelineCard key={record.id} record={record} />
+              <MedicalRecordTimelineCard
+                key={record.id}
+                record={record}
+                downloadPrescription={downloadPrescription}
+              />
             ))}
 
             {filteredRecords.length === 0 && (
@@ -312,12 +371,12 @@ function MedicalRecordsPage() {
   );
 }
 
-function MedicalRecordTimelineCard({ record }) {
+function MedicalRecordTimelineCard({ record, downloadPrescription }) {
   return (
     <div className="relative border-l-4 border-blue-600 pl-5 bg-gray-50 rounded-2xl p-5">
       <div className="absolute -left-3 top-6 w-5 h-5 bg-blue-600 rounded-full border-4 border-white" />
 
-      <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-4">
+      <div className="flex flex-col md:flex-row md:justify-between gap-3 mb-4">
         <div>
           <h4 className="text-xl font-bold text-gray-800">
             {record.pet_name}
@@ -325,8 +384,17 @@ function MedicalRecordTimelineCard({ record }) {
           <p className="text-sm text-gray-500">Doctor: {record.doctor_name}</p>
         </div>
 
-        <div className="text-sm text-gray-500">
-          {new Date(record.record_date).toLocaleString()}
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <div className="text-sm text-gray-500">
+            {new Date(record.record_date).toLocaleString()}
+          </div>
+
+          <button
+            onClick={() => downloadPrescription(record.id)}
+            className="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800"
+          >
+            Download Prescription
+          </button>
         </div>
       </div>
 
