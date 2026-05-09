@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const path = require("path");
+const fs = require("fs");
 
 const db = require("./db");
 
@@ -20,6 +22,11 @@ const doctorDashboardRoutes = require("./routes/doctorDashboardRoutes");
 const temporaryRegistrationRoutes = require("./routes/temporaryRegistrationRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const uploadsPath = path.join(__dirname, "uploads");
+
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath);
+}
 
 
 app.use(
@@ -44,7 +51,7 @@ app.use("/api/doctor-dashboard", doctorDashboardRoutes);
 app.use("/api/temporary-registrations", temporaryRegistrationRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/notifications", notificationRoutes);
-
+app.use("/uploads", express.static(uploadsPath));
 
 app.get("/", (req, res) => {
   res.send("Pet Hospital API is running");
